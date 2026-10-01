@@ -1,0 +1,139 @@
+class Category:
+    def __init__(self, name):
+        self.name = name
+        self.ledger = []
+
+    def deposit(self, amount, description=""):
+        self.ledger.append({
+            "amount": amount,
+            "description": description
+        })
+
+    def withdraw(self, amount, description=""):
+        if self.check_funds(amount):
+            self.ledger.append({
+                "amount": -amount,
+                "description": description
+            })
+            return True
+        return False
+
+    def get_balance(self):
+        total = 0
+
+        for item in self.ledger:
+            total += item["amount"]
+
+        return total
+
+    def transfer(self, amount, category):
+        if self.check_funds(amount):
+            self.withdraw(
+                amount,
+                "Transfer to " + category.name
+            )
+
+            category.deposit(
+                amount,
+                "Transfer from " + self.name
+            )
+
+            return True
+
+        return False
+
+    def check_funds(self, amount):
+        if amount > self.get_balance():
+            return False
+        return True
+
+    def __str__(self):
+        result = ""
+
+        # Category title
+        result += "*" * ((30 - len(self.name)) // 2)
+        result += self.name
+        result += "*" * (30 - len(result))
+
+        # Ledger entries
+        for item in self.ledger:
+            description = item["description"][:23]
+            amount = f"{item['amount']:.2f}"
+
+            result += "\n"
+            result += f"{description:<23}{amount:>7}"
+
+        # Total balance
+        result += f"\nTotal: {self.get_balance():.2f}"
+
+        return result
+
+
+def create_spend_chart(categories):
+    # Find total spending for each category
+    spent = []
+
+    for category in categories:
+        total = 0
+
+        for item in category.ledger:
+            if item["amount"] < 0:
+                total += -item["amount"]
+
+        spent.append(total)
+
+    # Find total spending
+    total_spent = sum(spent)
+
+    # Calculate percentages
+    percentages = []
+
+    for amount in spent:
+        percentage = int((amount / total_spent) * 100)
+        percentage = (percentage // 10) * 10
+        percentages.append(percentage)
+
+    # Chart title
+    result = "Percentage spent by category\n"
+
+    # Create percentage bars
+    for level in range(100, -1, -10):
+        result += f"{level:3}|"
+
+        for percentage in percentages:
+            if percentage >= level:
+                result += " o "
+            else:
+                result += "   "
+
+        result += " \n"
+
+    # Horizontal line
+    result += "    "
+    result += "-" * (len(categories) * 3 + 1)
+    result += "\n"
+
+    # Find longest category name
+    max_length = 0
+
+    for category in categories:
+        if len(category.name) > max_length:
+            max_length = len(category.name)
+
+    # Write category names vertically
+    for i in range(max_length):
+        result += "     "
+
+        for category in categories:
+            if i < len(category.name):
+                result += category.name[i]
+            else:
+                result += " "
+
+            result += "  "
+
+        # Do not add newline after the final line
+        if i < max_length - 1:
+            result += "\n"
+
+    return result
